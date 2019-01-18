@@ -1,4 +1,6 @@
 require 'sinatra'
+require 'date'
+require 'holiday_jp'
 require_relative 'lib/mkr'
 
 class App < Sinatra::Base
@@ -7,9 +9,13 @@ class App < Sinatra::Base
     'exited'  => :punch_out
   }.freeze
 
+  SATURDAY = 6
+  MONDAY = 0
+
   post '/' do
     params = JSON.parse(request.body.read)
     action = IFTTT_ACTIONS[params['action']]
+    today = Date.today
 
     unless valid_action?(action)
       Mkr.logger.failure("Invalid parameters: #{params.inspect}")
@@ -19,6 +25,11 @@ class App < Sinatra::Base
     unless valid_clock?(action)
       Mkr.logger.failure("Off hour: `:#{action}`")
       raise "Off hour: `:#{action}`"
+    end
+
+    unless valid_workday?(today)
+      Mkr.logger.failure("Day off: `#{today}`")
+      raise "Day off: `:#{today}`"
     end
 
     Mkr.logger.info("Process `:#{action}` action")
@@ -42,6 +53,10 @@ class App < Sinatra::Base
 
   def valid_clock?(action)
     send("validate_#{action}")
+  end
+
+  def valid_workday?(day)
+    !([SATURDAY, MONDAY].include?(day.wday) || HolidayJp.holiday?(day))
   end
 
   def validate_punch_in
