@@ -10,7 +10,7 @@ class App < Sinatra::Base
   }.freeze
 
   SATURDAY = 6
-  MONDAY = 0
+  SUNDAY = 0
 
   post '/' do
     params = JSON.parse(request.body.read)
@@ -56,7 +56,7 @@ class App < Sinatra::Base
   end
 
   def valid_workday?(day)
-    !([SATURDAY, MONDAY].include?(day.wday) || HolidayJp.holiday?(day))
+    !([SATURDAY, SUNDAY].include?(day.wday) || HolidayJp.holiday?(day))
   end
 
   def validate_punch_in
